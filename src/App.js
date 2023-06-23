@@ -9,72 +9,37 @@ import { Component } from 'react';
 import ParticlesBg from 'particles-bg'
 import './App.css';
 
-const returnClarifaiRequestOptions = (imageUrl) => {
-      // Your PAT (Personal Access Token) can be found in the portal under Authentification
-    const PAT = '67332b3a08994dd28b520e626670f4df';
-    // Specify the correct user_id/app_id pairings
-    // Since you're making inferences outside your app's scope
-    const USER_ID = 'kulya1986';       
-    const APP_ID = 'facefinder';
-    // Change these to whatever model and image URL you want to use
-    // const MODEL_ID = 'face-detection';
-    const IMAGE_URL = imageUrl;
 
-    const raw = JSON.stringify({
-        "user_app_id": {
-            "user_id": USER_ID,
-            "app_id": APP_ID
-        },
-        "inputs": [
-            {
-                "data": {
-                    "image": {
-                        "url": IMAGE_URL
-                    }
-                }
-            }
-        ]
-    });
-
-    const requestOptions = {
-        method: 'POST',
-        headers: {
-            'Accept': 'application/json',
-            'Authorization': 'Key ' + PAT
-        },
-        body: raw
-    };
-    return requestOptions;
+const initialState = {
+    input:'',
+    imageUrl:'',
+    box:[{}],
+    route: 'signin',
+    isSignedIn: false,
+    user:{
+      id:'',
+      name: '',
+      email: '',
+      entries: 0,
+      joined: ''
+    }
 }
 
 class App extends Component {
   constructor(){
       super();
-      this.state={
-        input:'',
-        imageUrl:'',
-        box:[{}],
-        route: 'signin',
-        isSignedIn: false,
-        user:{
-          id:'',
-          name: '',
-          email: '',
-          entries: 0,
-          joined: ''
-        }
-      }
+      this.state=initialState;  
   }
 
-loadUser = (data) => {
-    this.setState({user: {
-          id:data.id,
-          name: data.name,
-          email: data.email,
-          entries: data.entries,
-          joined: data.joined
-    }})
-}
+  loadUser = (data) => {
+      this.setState({user: {
+            id:data.user_id,
+            name: data.user_name,
+            email: data.user_email,
+            entries: data.url_entries,
+            joined: data.join_date
+      }})
+  }
 
 
   calculateFaceLocation = (data) =>{
@@ -107,7 +72,14 @@ loadUser = (data) => {
   onButtonSubmit = () => {
     this.setState({imageUrl: this.state.input});
 
-    fetch("https://api.clarifai.com/v2/models/face-detection/outputs", returnClarifaiRequestOptions(this.state.input))
+    fetch('http://localhost:3000/imageurl', {
+        method: "POST",
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(
+            {
+                "input":this.state.input
+            })
+      })
         .then(response => response.json())
         .then(result => {
           if (result) {
@@ -122,6 +94,7 @@ loadUser = (data) => {
               .then(count => {
                 this.setState(Object.assign(this.state.user,{entries:count}))
               })
+              .catch(console.log)
           }
           this.outlineFaceArea(this.calculateFaceLocation(result))
         }) 
@@ -130,7 +103,7 @@ loadUser = (data) => {
 
   onRouteChange = (route) =>{
     if(route === 'signout'){
-      this.setState({isSignedIn: false})
+      this.setState(initialState)
     } else if (route === 'home'){
       this.setState({isSignedIn: true})
     }

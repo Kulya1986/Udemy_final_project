@@ -5,7 +5,7 @@ class Register extends Component{
     constructor(props){
         super(props);
         this.state = {
-            regsterEmail:'',
+            registerEmail:'',
             registerPassword:'',
             registerName:''
         }
@@ -37,7 +37,7 @@ class Register extends Component{
         })
             .then(response => response.json())
             .then(user => {
-                if (user)
+                if (user.user_id)
                 {
                     this.props.loadUser(user);
                     this.props.onRouteChange('home')
